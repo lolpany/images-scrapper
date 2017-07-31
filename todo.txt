@@ -1,0 +1,134 @@
+search quality
+image quality
+calculate performance
+    decide is it needed to multithread
+        is it needed to have different numbers of db-connections/images-downloaders/fs-writers
+store in directory hierarchy for performance
+    measurement
+        2000 in one dir
+        2 levels for 8 billions goods (its < 1 billion on amazon)
+    or not
+        images are already stored somehow
+measure performance and decide if it enough
+    16h to down all on my pc
+parameter to limit number of updated items - to not break site
+restarts
+    param to start from
+db structure
+    catalog_product_entity_media_gallery
+    Eav Attribute
+        132
+        4
+        upc
+            SELECT count(*) from catalog_product_entity_varchar where attribute_id = 132
+
+        41
+        3
+        name
+
+        71
+        4
+        name
+            SELECT count(*) from catalog_product_entity_varchar where attribute_id = 71
+
+        44
+        3
+        description
+
+        72
+        4
+        description
+            SELECT count(*) from catalog_product_entity_text where attribute_id = 72
+
+select product.entity_id as id, image.value as image_path, upc.value as upc_value, name.value as name
+     from (select entity_id from catalog_product_entity where entity_type_id = 4 order by entity_id limit 1,1000) product
+   left join catalog_product_entity_varchar image on (image.entity_id = product.entity_id  and image.attribute_id = 85)
+   left join catalog_product_entity_varchar upc  on (product.entity_id = upc.entity_id and upc.attribute_id = 132)
+             left join catalog_product_entity_varchar name  on (product.entity_id = name.entity_id and name.attribute_id = 71)
+          ;
+
+
+ mysql megacomp_electric -u megacomp_scrap --password=As1234567 "select product.entity_id as id, image.value as image_path, upc.value as upc_value, name.value as name
+                                                                     from (select entity_id from catalog_product_entity where entity_type_id = 4 order by entity_id ) product
+                                                                   left join catalog_product_entity_varchar image on (image.entity_id = product.entity_id  and image.attribute_id = 85)
+                                                                   left join catalog_product_entity_varchar upc  on (product.entity_id = upc.entity_id and upc.attribute_id = 132)
+                                                                             left join catalog_product_entity_varchar name  on (product.entity_id = name.entity_id and name.attribute_id = 71)" out.csv
+
+
+mysql megacomp_electric -u megacomp_scrap --password=As1234567 < /home/megacomponent/imagescrapper/go.sql > /home/megacomponent/imagescrapper/out.csv
+
+ pass for ssh key server    fa/sfw2/f23f/23/f
+
+ pass for
+
+
+ ernsd90@gmail.com
+ navjot
+ sing
+
+
+ cleanup security
+    remove ssh key
+    remove rest api user
+
+
+ magento  1.9.3.2
+
+
+
+max product id = 828979
+
+
+
+sqluser megacomp_scrap  As1234567
+
+
+ java -Xms512m -jar images-scrapper-1.0-SNAPSHOT-jar-with-dependencies.jar -jdbcurl jdbc:mysql://localhost:3306/megacomp_electric -user megacomp_scrap -password As1234567  -imageslocation /home/megacomponent/public_html/media/import -magmidir public_html/var/import -downloaders 3 -writers 2 -from 34000 -n 10
+
+
+
+
+
+
+
+
+ started at 19:30
+
+ started upload of 150mb (5k products) at 15:58:10 = 10 minutes of upload
+    1.2 m products = 38g = ? of upload time
+
+
+  cpanel  10uC1q1bz#05
+
+mega    5*R[B5j-q6\2l)l
+
+magento
+
+    29234 -  21812 = 7422 ids  == 2500 images
+
+    5600 images for 2.5 hours
+
+
+51386 - 50000
+
+
+divide separate process
+    picclick
+    google
+    yandex
+
+change for every
+    4k ids = 600 images = 150mb
+        150 * 28 = 4.2gb = 112k ids
+
+
+
+
+
+
+--- current ------------
+
+//check if uploaded
+one csv for all
+size
+    local hard drive
