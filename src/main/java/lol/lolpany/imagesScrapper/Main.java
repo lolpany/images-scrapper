@@ -25,7 +25,10 @@ import static com.google.code.magja.model.product.ProductMedia.Type.SMALL_IMAGE;
 
 public class Main {
 
-    final static int SIZE_LIMIT_TO_FILTER_OUT_BAD_AND_MANUFACTURER = 130 * 1024;
+    final static int SIZE_LIMIT_TO_FILTER_OUT_BAD_AND_MANUFACTURER = 10 * 1024;
+    final static int STARTING_IMAGE_SIZE = 130 * 1024;
+    final static int MIN_IMAGE_SIZE = 10 * 1024;
+    final static int IMAGE_SIZE_STEP = 10 * 1024;
 
     @Option(name = "-jdbcurl", usage = "jdbc url to connect to db")
     private String jdbcUrl;
@@ -162,7 +165,7 @@ public class Main {
         List<BlockingQueue<StringBuilder>> csvWriterQueues = new ArrayList<>();
         for (int i = 0; i < downloaders; i++) {
             BlockingQueue<StringBuilder> csvWriterQueue = new ArrayBlockingQueue<>(5);
-            executorService.execute(new EbayImageDownloader(null, queue, n,
+            executorService.execute(new EbayImageDownloader(null, queue,
                     fileQueue, imagesRoot, magmiDir, i, dumpEvery, csvWriterQueue));
             csvWriterQueues.add(csvWriterQueue);
         }
@@ -179,7 +182,7 @@ public class Main {
             } else{
                 endFiles = downloaders/writers + downloaders % writers;
             }
-            executorService.execute(new ImageWriter(fileQueue, imageLocation, n,endFiles ));
+            executorService.execute(new ImageWriter(fileQueue, imageLocation, endFiles ));
         }
 
 //        try {

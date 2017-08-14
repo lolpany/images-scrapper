@@ -19,7 +19,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.regex.Pattern;
 
 import static lol.lolpany.imagesScrapper.ImageWriter.END_FILE;
-import static lol.lolpany.imagesScrapper.Main.SIZE_LIMIT_TO_FILTER_OUT_BAD_AND_MANUFACTURER;
+import static lol.lolpany.imagesScrapper.Main.*;
 import static lol.lolpany.imagesScrapper.Product2.END_QUEUE;
 import static org.apache.commons.io.IOUtils.toByteArray;
 
@@ -29,7 +29,6 @@ public class EbayImageDownloader implements Runnable {
 
     final ProductRemoteService productService;
     final BlockingQueue<Product2> inputQueue;
-    final int n;
     final BlockingQueue<Pair<String, byte[]>> fileQueue;
     final String imagesRoot;
     final String magmiDir;
@@ -39,11 +38,10 @@ public class EbayImageDownloader implements Runnable {
 
 
     EbayImageDownloader(ProductRemoteService productService, BlockingQueue<Product2> inputQueue,
-                        int n, BlockingQueue<Pair<String, byte[]>> fileQueue, String imagesRoot,
+                        BlockingQueue<Pair<String, byte[]>> fileQueue, String imagesRoot,
                         String magmiDir, int downloaderIndex, int dumpEvery, BlockingQueue<StringBuilder> csvWriterQueue) {
         this.productService = productService;
         this.inputQueue = inputQueue;
-        this.n = n;
         this.fileQueue = fileQueue;
         this.imagesRoot = imagesRoot;
         this.magmiDir = magmiDir;
@@ -53,7 +51,7 @@ public class EbayImageDownloader implements Runnable {
     }
 
     public void run() {
-        StringBuilder result = new StringBuilder("sku,image,small_image,thumbnail");
+        StringBuilder result = new StringBuilder("");
         int i = 0;
         int batchNumber = 0;
         while (true) {
@@ -67,38 +65,44 @@ public class EbayImageDownloader implements Runnable {
                         + URLEncoder.encode(productToDump.name, "UTF-8")).get();
                 Elements metaDivs = doc.select("li.sresult div img");
                 if (!"NULL".equals(productToDump.name) && !metaDivs.isEmpty()) {
-                    for (Element metaDiv : metaDivs) {
-                        String imageSrc = metaDiv.attr("src");
-                        imageSrc = imageSrc.replace("s-l225", "s-l1600");
-                        URL url = new URL(imageSrc);
-                        URLConnection con = url.openConnection();
-                        con.setConnectTimeout(100000);
-                        con.setReadTimeout(100000);
-                        String imageExtension = imageSrc.substring(imageSrc.lastIndexOf(".") + 1);
+                    int imageSize = STARTING_IMAGE_SIZE;
+                    boolean downed= false;
+                    while (imageSize > MIN_IMAGE_SIZE && !downed) {
+                        for (Element metaDiv : metaDivs) {
+                            String imageSrc = metaDiv.attr("src");
+                            imageSrc = imageSrc.replace("s-l225", "s-l1600");
+                            URL url = new URL(imageSrc);
+                            URLConnection con = url.openConnection();
+                            con.setConnectTimeout(100000);
+                            con.setReadTimeout(100000);
+                            String imageExtension = imageSrc.substring(imageSrc.lastIndexOf(".") + 1);
 //                i++;
 //                    setProductImage(productService, productToDump.getLeft(), productToDump.getRight(), imageExtension,
 //                            toByteArray(con.openStream()));
-                        String sku = productToDump.sku;
-                        byte[] imageBytes = toByteArray(con.getInputStream());
-                        if (imageBytes.length < SIZE_LIMIT_TO_FILTER_OUT_BAD_AND_MANUFACTURER) {
-                            continue;
-                        }
-                        result.append("\n" + sku + "," + sku + "." + imageExtension + ","
-                                + sku + "." + imageExtension
-                                + "," + sku + "." + imageExtension);
-                        i++;
-                        if (i == dumpEvery) {
-                            i = 0;
+                            String sku = productToDump.sku;
+                            byte[] imageBytes = toByteArray(con.getInputStream());
+                            if (imageBytes.length <= imageSize) {
+                                continue;
+                            }
+                            result.append("\n" + sku + "," + sku + "." + imageExtension + ","
+                                    + sku + "." + imageExtension
+                                    + "," + sku + "." + imageExtension);
+                            i++;
+                            if (i == dumpEvery) {
+                                i = 0;
 //                                FileUtils.writeStringToFile(new File(magmiDir + File.separator+ "ebay"
 //                                        + downloaderIndex+"-"+batchNumber  +".csv"), result.toString(), StandardCharsets.UTF_8);
-                            csvWriterQueue.put(result);
+                                csvWriterQueue.put(result);
 //                                batchNumber++;
-                            result=new StringBuilder("sku,image,small_image,thumbnail");
-                        }
-                        fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
-                                imageBytes));
+                                result = new StringBuilder("");
+                            }
+                            fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
+                                    imageBytes));
+                            downed = true;
 
-                        break;
+                            break;
+                        }
+                        imageSize -= IMAGE_SIZE_STEP;
                     }
                 }
 

@@ -44,8 +44,7 @@ select product.entity_id as id, image.value as image_path, upc.value as upc_valu
      from (select entity_id from catalog_product_entity where entity_type_id = 4 order by entity_id limit 1,1000) product
    left join catalog_product_entity_varchar image on (image.entity_id = product.entity_id  and image.attribute_id = 85)
    left join catalog_product_entity_varchar upc  on (product.entity_id = upc.entity_id and upc.attribute_id = 132)
-             left join catalog_product_entity_varchar name  on (product.entity_id = name.entity_id and name.attribute_id = 71)
-          ;
+             left join catalog_product_entity_varchar name  on (product.entity_id = name.entity_id and name.attribute_id = 71);
 
 
  mysql megacomp_electric -u megacomp_scrap --password=As1234567 "select product.entity_id as id, image.value as image_path, upc.value as upc_value, name.value as name
@@ -55,7 +54,16 @@ select product.entity_id as id, image.value as image_path, upc.value as upc_valu
                                                                              left join catalog_product_entity_varchar name  on (product.entity_id = name.entity_id and name.attribute_id = 71)" out.csv
 
 
+select product.entity_id as id,product.sku as sku , image.value as image_path, upc.value as upc_value, name.value as name_value
+     from (select entity_id, sku from catalog_product_entity where entity_type_id = 4 order by entity_id ) product
+   left join catalog_product_entity_varchar image on (image.entity_id = product.entity_id  and image.attribute_id = 85)
+   left join catalog_product_entity_varchar upc  on (product.entity_id = upc.entity_id and upc.attribute_id = 132)
+             left join catalog_product_entity_varchar name  on (product.entity_id = name.entity_id and name.attribute_id = 71)
+
 mysql megacomp_electric -u megacomp_scrap --password=As1234567 < /home/megacomponent/imagescrapper/go.sql > /home/megacomponent/imagescrapper/out.csv
+
+
+mysql univold_univoldsdb -u univold_scrap --password=As1234567 < ~/go.sql > ~/out.csv
 
  pass for ssh key server    fa/sfw2/f23f/23/f
 
@@ -83,11 +91,13 @@ max product id = 828979
 sqluser megacomp_scrap  As1234567
 
 
+univold_scrap   As1234567
+
  java -Xms512m -jar images-scrapper-1.0-SNAPSHOT-jar-with-dependencies.jar -jdbcurl jdbc:mysql://localhost:3306/megacomp_electric -user megacomp_scrap -password As1234567  -imageslocation /home/megacomponent/public_html/media/import -magmidir public_html/var/import -downloaders 3 -writers 2 -from 34000 -n 10
 
 
 
-
+gbesergey@gmail.com sadf3f23F#@
 
 
 
@@ -98,7 +108,7 @@ sqluser megacomp_scrap  As1234567
     1.2 m products = 38g = ? of upload time
 
 
-  cpanel  10uC1q1bz#05
+  cpanel  megacomponent X7f06gM@C8n2
 
 mega    5*R[B5j-q6\2l)l
 
@@ -122,7 +132,7 @@ change for every
         150 * 28 = 4.2gb = 112k ids
 
 
-
+univold v94RL8T$2IT4
 
 
 
@@ -132,3 +142,51 @@ change for every
 one csv for all
 size
     local hard drive
+
+
+
+started 23:36
+     10 mins - 1200 images, 40k products, 330mb
+
+
+
+
+
+
+
+
+     check that images uped by checking last rows of last csv
+     mv import folder and recheck images
+     remove import folder
+     do cycle for other folders
+
+
+
+
+
+
+--- first run -------------
+
+53% effected
+12% good images
+88% declined by google
+68% small image not approved by google
+
+
+
+
+
+
+--- second run ------------------
+
+     image error is down to %42 out of 150,000 products
+     %39 image to small
+     15% missing images
+     3% generic images
+
+
+
+
+
+ is there both sku on site
+ way to handle

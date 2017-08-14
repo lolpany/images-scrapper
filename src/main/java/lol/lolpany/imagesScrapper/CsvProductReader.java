@@ -43,7 +43,8 @@ public class CsvProductReader implements Runnable {
                 String[] productAttributes = scanner.nextLine().split("\t", 5);
                 int productId = Integer.parseInt(productAttributes[0]);
                     System.out.println(productId);
-                if (productId > to) {
+                    i++;
+                if (i > to) {
                     break;
                 }
                 productQueue.put(new Product2(productId, productAttributes[1],

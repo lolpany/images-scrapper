@@ -57,7 +57,8 @@ public class CsvWriter implements Runnable {
                 csvPart.remove(0);
             }
             try {
-                FileUtils.writeStringToFile(new File("D:\\buffer\\magmi\\lol" + batchNumber + ".csv"), csv.toString(), StandardCharsets.UTF_8);
+                FileUtils.writeStringToFile(new File("D:\\buffer\\magmi\\lol" + batchNumber + ".csv"),
+                        "sku,image,small_image,thumbnail\n" + csv.toString(), StandardCharsets.UTF_8);
             } catch (IOException e) {
                 e.printStackTrace();
             }

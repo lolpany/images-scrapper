@@ -13,10 +13,9 @@ public class ImageWriter implements Runnable {
 
     private final BlockingQueue<Pair<String, byte[]>> fileQueue;
     private final String imageLocation;
-    private final int n;
     private final int endFiles;
 
-    public ImageWriter(BlockingQueue<Pair<String, byte[]>> fileQueue, String imageLocation, int n,
+    public ImageWriter(BlockingQueue<Pair<String, byte[]>> fileQueue, String imageLocation,
                        int endFiles) {
         this.fileQueue = fileQueue;
         this.imageLocation = imageLocation;
@@ -24,7 +23,6 @@ public class ImageWriter implements Runnable {
 //        ProductRemoteService productService = remoteServiceFactory.getProductRemoteService();
 //        productService.setConfigurableAttributes();
 
-        this.n = n;
         this.endFiles= endFiles;
     }
 
