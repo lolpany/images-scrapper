@@ -108,7 +108,7 @@ gbesergey@gmail.com sadf3f23F#@
     1.2 m products = 38g = ? of upload time
 
 
-  cpanel  megacomponent X7f06gM@C8n2
+  cpanel  megacomponent z7NR:f3]*kVFw"dA
 
 mega    5*R[B5j-q6\2l)l
 
@@ -134,7 +134,7 @@ change for every
 
 univold v94RL8T$2IT4
 
-
+univold mysql univold_unvldusr
 
 --- current ------------
 
@@ -190,3 +190,27 @@ started 23:36
 
  is there both sku on site
  way to handle
+
+ find ~10 not downed
+ redwon and try to import
+
+
+univold-magmi   admin  sT4MAwYtnVgVE
+
+univold-mysql   univold_scrap   sadf23fABw23g23af33
+
+
+
+
+--- todo ------------
+
+csv minus tool to get what wasnt downloaded
+place csv in other folder than images for convenienct
+create folder for images and csv if it not exists
+log images with exceptions
+    or maybe they dont go to csv
+
+
+all - 188.6k
+    downed - 135.6k
+    SW FOUND HYPERVISOR AGNOSTIC INSTAL CTLR VM PRISM MGMT LICS - 20k

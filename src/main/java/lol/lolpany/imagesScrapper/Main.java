@@ -2,7 +2,9 @@ package lol.lolpany.imagesScrapper;
 
 import com.google.code.magja.model.product.ProductMedia;
 import com.google.code.magja.service.ServiceException;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.Test;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -11,13 +13,11 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static com.google.code.magja.model.product.ProductMedia.Type.IMAGE;
@@ -316,4 +316,6 @@ public class Main {
 ////            System.out.println("done");
 //        }
 //    }
+
+
 }
