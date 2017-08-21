@@ -53,7 +53,6 @@ public class EbayImageDownloader implements Runnable {
     public void run() {
         StringBuilder result = new StringBuilder("");
         int i = 0;
-        int batchNumber = 0;
         while (true) {
             try {
                 Product2 productToDump = inputQueue.take();
@@ -76,9 +75,6 @@ public class EbayImageDownloader implements Runnable {
                             con.setConnectTimeout(100000);
                             con.setReadTimeout(100000);
                             String imageExtension = imageSrc.substring(imageSrc.lastIndexOf(".") + 1);
-//                i++;
-//                    setProductImage(productService, productToDump.getLeft(), productToDump.getRight(), imageExtension,
-//                            toByteArray(con.openStream()));
                             String sku = productToDump.sku;
                             byte[] imageBytes = toByteArray(con.getInputStream());
                             if (imageBytes.length <= imageSize) {
@@ -90,10 +86,7 @@ public class EbayImageDownloader implements Runnable {
                             i++;
                             if (i == dumpEvery) {
                                 i = 0;
-//                                FileUtils.writeStringToFile(new File(magmiDir + File.separator+ "ebay"
-//                                        + downloaderIndex+"-"+batchNumber  +".csv"), result.toString(), StandardCharsets.UTF_8);
                                 csvWriterQueue.put(result);
-//                                batchNumber++;
                                 result = new StringBuilder("");
                             }
                             fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
@@ -114,8 +107,6 @@ public class EbayImageDownloader implements Runnable {
         }
 
         try {
-//            FileUtils.writeStringToFile(new File(magmiDir + File.separator+
-//                    "ebay"+ downloaderIndex+".csv"), result.toString(), StandardCharsets.UTF_8);
             csvWriterQueue.put(result);
 
         } catch (InterruptedException e) {
