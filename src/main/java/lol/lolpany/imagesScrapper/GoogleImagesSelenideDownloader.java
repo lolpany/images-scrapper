@@ -5,34 +5,38 @@ import com.google.code.magja.service.product.ProductRemoteService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.phantomjs.PhantomJSDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.codeborne.selenide.Selenide.switchTo;
 import static java.lang.Thread.sleep;
 import static lol.lolpany.imagesScrapper.ImageWriter.END_FILE;
-import static lol.lolpany.imagesScrapper.Main.*;
 import static lol.lolpany.imagesScrapper.Product2.END_QUEUE;
+import static lol.lolpany.imagesScrapper.Utils.identifyImageExtension;
 import static org.apache.commons.io.IOUtils.toByteArray;
 
 public class GoogleImagesSelenideDownloader implements Runnable {
@@ -46,13 +50,12 @@ public class GoogleImagesSelenideDownloader implements Runnable {
     final int downloaderIndex;
     final int dumpEvery;
     final BlockingQueue<StringBuilder> csvWriterQueue;
-    private final FirefoxProfile profile;
 
 
     GoogleImagesSelenideDownloader(ProductRemoteService productService, BlockingQueue<Product2> inputQueue,
                                    BlockingQueue<Pair<String, byte[]>> fileQueue, String imagesRoot,
                                    String magmiDir, int downloaderIndex, int dumpEvery,
-                                   BlockingQueue<StringBuilder> csvWriterQueue, FirefoxProfile profile) {
+                                   BlockingQueue<StringBuilder> csvWriterQueue) {
         this.productService = productService;
         this.inputQueue = inputQueue;
         this.fileQueue = fileQueue;
@@ -61,23 +64,34 @@ public class GoogleImagesSelenideDownloader implements Runnable {
         this.downloaderIndex = downloaderIndex;
         this.dumpEvery = dumpEvery;
         this.csvWriterQueue = csvWriterQueue;
-        this.profile = profile;
     }
 
     @Override
     public void run() {
 
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments("headless");
+        WebDriver driver = new ChromeDriver(chromeOptions);
 
-        DesiredCapabilities capabilities = DesiredCapabilities.firefox();
-        capabilities.setCapability("marionette", true);
+
+
+//        PhantomJSDriver driver = new PhantomJSDriver();
+
+
+
+//        DesiredCapabilities capabilities = DesiredCapabilities.firefox();
+//        capabilities.setCapability("marionette", true);
+//        FirefoxProfile profile = new FirefoxProfile();
+//        FirefoxOptions firefoxOptions = new FirefoxOptions();
+//        firefoxOptions.setProfile(profile);
+//        firefoxOptions.addCapabilities(capabilities);
+//
+//        FirefoxDriver driver = new FirefoxDriver(firefoxOptions);
+
 //        capabilities.setCapability(org.openqa.selenium.remote.CapabilityType.PROXY, p);
 
 
-        FirefoxOptions firefoxOptions = new FirefoxOptions();
-        firefoxOptions.setProfile(profile);
-        firefoxOptions.addCapabilities(capabilities);
 
-        WebDriver driver = new FirefoxDriver(firefoxOptions);
         Configuration.baseUrl = "https://www.google.com/";
 
         StringBuilder result = new StringBuilder("sku,image,small_image,thumbnail");
@@ -96,7 +110,8 @@ public class GoogleImagesSelenideDownloader implements Runnable {
                         + URLEncoder.encode(productToDump.name, "UTF-8"));
                 try {
                     driver.findElement(By.id("recaptcha"));
-                    driver.findElement(By.className("recaptcha-checkbox-checkmark")).click();
+//                    switchTo().frame(0);
+//                    driver.findElement(By.cssSelector("recaptcha-checkbox-checkmark")).click();
                     sleep(10000);
                     driver.findElement(By.name("submit")).submit();
                 } catch (NoSuchElementException e) {
@@ -117,21 +132,24 @@ public class GoogleImagesSelenideDownloader implements Runnable {
                     URLConnection con = url.openConnection();
                     con.setConnectTimeout(100000);
                     con.setReadTimeout(100000);
-                    String imageExtension = imageSrc.substring(imageSrc.lastIndexOf(".") + 1);
-                    String sku = productToDump.sku;
                     byte[] imageBytes = toByteArray(con.getInputStream());
-                    result.append("\n" + sku + "," + sku + "." + imageExtension + ","
-                            + sku + "." + imageExtension
-                            + "," + sku + "." + imageExtension);
-                    i++;
-                    if (i == dumpEvery) {
-                        i = 0;
-                        csvWriterQueue.put(result);
-                        result = new StringBuilder("");
+                    String imageExtension = identifyImageExtension(imageBytes);
+                    if (imageExtension != null) {
+                        String sku = productToDump.sku;
+
+                        result.append("\n" + sku + "," + sku + "." + imageExtension + ","
+                                + sku + "." + imageExtension
+                                + "," + sku + "." + imageExtension);
+                        i++;
+                        if (i == dumpEvery) {
+                            i = 0;
+                            csvWriterQueue.put(result);
+                            result = new StringBuilder("");
+                        }
+                        fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
+                                imageBytes));
+                        sleep(2000 + Math.round( Math.random()) * 10000);
                     }
-                    fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
-                            imageBytes));
-                    sleep(Math.round(Math.random()) * 1000);
                 }
 
             } catch (InterruptedException e) {

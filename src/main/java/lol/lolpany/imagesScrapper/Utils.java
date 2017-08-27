@@ -3,16 +3,34 @@ package lol.lolpany.imagesScrapper;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 public class Utils {
+
+    public static String identifyImageExtension(byte[] imageBytes) throws IOException {
+        ImageInputStream iis = ImageIO.createImageInputStream(new ByteArrayInputStream(imageBytes));
+
+        Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(iis);
+
+        if (imageReaders.hasNext()) {
+            return imageReaders.next().getFormatName();
+        }
+        return null;
+    }
+
     @Test
     public void diff() throws IOException {
-        FileUtils.writeLines(new File("D:\\buffer\\scrapper\\univold-notdowned.csv"),
-                diff("D:\\buffer\\scrapper\\out.csv", "D:\\buffer\\downedcsv\\univold0.csv"));
+        FileUtils.writeLines(new File("D:\\buffer\\scrapper\\mega-notdowned.csv"),
+                diff("D:\\buffer\\scrapper\\out (1).csv", "D:\\buffer\\downedcsv\\mega-downed-second.csv"));
     }
 
     public Collection<String> diff(String toDownload, String downloaded) throws FileNotFoundException {
@@ -42,5 +60,36 @@ public class Utils {
             toDownloadMap.remove(sku);
         }
         return toDownloadMap.values();
+    }
+
+
+    @Test
+    public void renameFiles() throws IOException {
+        Files.walkFileTree(Paths.get("D:\\buffer\\magmi2"), new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    throws IOException
+            {
+                File current = file.toFile();
+                if (current.isFile()) {
+                    String fileName = current.getName();
+                    String[] fileNameParts = fileName.split("\\.");
+                    current.renameTo(new File("D:\\buffer\\magmiend" + File.separator + fileNameParts[0]
+                    + fileNameParts[fileNameParts.length -1]));
+                }
+                return FileVisitResult.CONTINUE;
+            }
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException e)
+                    throws IOException
+            {
+                if (e == null) {
+                    return FileVisitResult.CONTINUE;
+                } else {
+                    // directory iteration failed
+                    throw e;
+                }
+            }
+        });
     }
 }

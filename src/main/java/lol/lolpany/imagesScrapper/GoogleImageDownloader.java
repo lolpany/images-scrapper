@@ -8,6 +8,9 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +18,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,6 +27,7 @@ import static java.lang.Thread.sleep;
 import static lol.lolpany.imagesScrapper.ImageWriter.END_FILE;
 import static lol.lolpany.imagesScrapper.Main.SIZE_LIMIT_TO_FILTER_OUT_BAD_AND_MANUFACTURER;
 import static lol.lolpany.imagesScrapper.Product2.END_QUEUE;
+import static lol.lolpany.imagesScrapper.Utils.identifyImageExtension;
 import static org.apache.commons.io.IOUtils.toByteArray;
 
 public class GoogleImageDownloader implements Runnable {
@@ -63,12 +68,19 @@ public class GoogleImageDownloader implements Runnable {
                 if (productToDump.equals(END_QUEUE)) {
                     break;
                 }
+                if (productToDump.name.contains("SW FOUND")) {
+                    continue;
+                }
                 Document doc = Jsoup.connect("https://www.google.ru/search?newwindow=1&tbm=isch&sa=1&q="
                         + URLEncoder.encode(productToDump.name, "UTF-8")).get();
                 Elements metaDivs = doc.select("#isr_mc div.rg_meta");
+
+
+                Element image = metaDivs.get(findLargestImageIndex(doc, 12));
+
                 if (!"NULL".equals(productToDump.name) && !metaDivs.isEmpty()) {
-                    for (Element metaDiv : metaDivs) {
-                        String metaDivText = metaDiv.ownText();
+                    if (image != null) {
+                        String metaDivText = image.ownText();
                         Matcher urlMatcher = META_DIV_URL_PATTERN.matcher(metaDivText);
                         urlMatcher.find();
                         String imageSrc = urlMatcher.group(1);
@@ -76,25 +88,26 @@ public class GoogleImageDownloader implements Runnable {
                         URLConnection con = url.openConnection();
                         con.setConnectTimeout(100000);
                         con.setReadTimeout(100000);
-                        String imageExtension = imageSrc.substring(imageSrc.lastIndexOf(".") + 1);
-                        String sku = productToDump.sku;
                         byte[] imageBytes = toByteArray(con.getInputStream());
-                        if (imageBytes.length < SIZE_LIMIT_TO_FILTER_OUT_BAD_AND_MANUFACTURER) {
-                            continue;
+                        String imageExtension = identifyImageExtension(imageBytes);
+                        if (imageExtension != null) {
+                            String sku = productToDump.sku;
+                            if (imageBytes.length < SIZE_LIMIT_TO_FILTER_OUT_BAD_AND_MANUFACTURER) {
+                                continue;
+                            }
+                            result.append("\n" + sku + "," + sku + "." + imageExtension + ","
+                                    + sku + "." + imageExtension
+                                    + "," + sku + "." + imageExtension);
+                            i++;
+                            if (i == dumpEvery) {
+                                i = 0;
+                                csvWriterQueue.put(result);
+                                result = new StringBuilder("");
+                            }
+                            fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
+                                    imageBytes));
+                            sleep(2000 + Math.round(Math.random()) * 10000);
                         }
-                        result.append("\n" + sku + "," + sku + "." + imageExtension + ","
-                                + sku + "." + imageExtension
-                                + "," + sku + "." + imageExtension);
-                        i++;
-                        if (i == dumpEvery) {
-                            i = 0;
-                            csvWriterQueue.put(result);
-                            result = new StringBuilder("");
-                        }
-                        fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
-                                imageBytes));
-                        sleep(Math.round(Math.random())*1000);
-                        break;
                     }
                 }
 
@@ -122,5 +135,22 @@ public class GoogleImageDownloader implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private int findLargestImageIndex(Document doc, int limit) {
+        int maxImageIndex = 0;
+        int maxImageSize = 0;
+        Elements elements = doc.select("span.rg_ilmn");
+        for (int i = 0; i < limit; i++) {
+            String[] contentParts = elements.get(i).ownText().split(" ");
+            String[] dimensions = contentParts[0].split("×");
+            int size = Integer.parseInt(dimensions[0].substring(0, dimensions[0].length() - 1))
+                    * Integer.parseInt(dimensions[1].substring(1));
+            if (size > maxImageSize) {
+                maxImageSize = size;
+                maxImageIndex = i;
+            }
+        }
+        return maxImageIndex;
     }
 }

@@ -2,19 +2,22 @@ package lol.lolpany.imagesScrapper;
 
 import com.google.code.magja.model.product.ProductMedia;
 import com.google.code.magja.service.ServiceException;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Test;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.phantomjs.PhantomJSDriver;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
@@ -90,9 +93,9 @@ public class Main {
                        String username, String password, int downloaders, int writers,
                        int dumpEvery) throws SQLException {
 
-        BlockingQueue<Product2> queue = new ArrayBlockingQueue<>(20);
+        BlockingQueue<Product2> queue = new ArrayBlockingQueue<>(downloaders *2);
         // ~40kb * 20 = 40mb of memory
-        BlockingQueue<Pair<String, byte[]>> fileQueue = new ArrayBlockingQueue<Pair<String, byte[]>>(10);
+        BlockingQueue<Pair<String, byte[]>> fileQueue = new ArrayBlockingQueue<>(downloaders *2);
 
         int numberOfRunners = 1 + downloaders + writers + 3;
 
@@ -103,15 +106,15 @@ public class Main {
         executorService.execute(new CsvProductReader(null,from, n, queue,
                 url, username, password, downloaders));
 
-        System.setProperty("webdriver.gecko.driver", "D:\\buffer\\geckodriver-v0.17.0-win64\\geckodriver.exe");
-        FirefoxProfile profile = new FirefoxProfile();
+//        System.setProperty("webdriver.gecko.driver", "D:\\buffer\\geckodriver-v0.17.0-win64\\geckodriver.exe");
+        System.setProperty("webdriver.chrome.driver", "D:\\buffer\\chromedriver\\chromedriver.exe");
 
 
         List<BlockingQueue<StringBuilder>> csvWriterQueues = new ArrayList<>();
         for (int i = 0; i < downloaders; i++) {
             BlockingQueue<StringBuilder> csvWriterQueue = new ArrayBlockingQueue<>(5);
             executorService.execute(new GoogleImagesSelenideDownloader(null, queue,
-                    fileQueue, imagesRoot, magmiDir, i, dumpEvery, csvWriterQueue, profile));
+                    fileQueue, imagesRoot, magmiDir, i, dumpEvery, csvWriterQueue));
             csvWriterQueues.add(csvWriterQueue);
         }
 
@@ -121,12 +124,11 @@ public class Main {
             int endFiles ;
             if (i < writers) {
                 endFiles = downloaders/writers;
-            } else{
+            } else {
                 endFiles = downloaders/writers + downloaders % writers;
             }
             executorService.execute(new ImageWriter(fileQueue, imageLocation, endFiles ));
         }
-
     }
 
     private static void disableSslChecks() {

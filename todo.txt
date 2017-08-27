@@ -214,3 +214,10 @@ log images with exceptions
 all - 188.6k
     downed - 135.6k
     SW FOUND HYPERVISOR AGNOSTIC INSTAL CTLR VM PRISM MGMT LICS - 20k
+
+
+down 30
+    firefox
+        2 mins - started 1 firefox
+        350mb and 220 mb, 50 %processor
+    chrome headless
