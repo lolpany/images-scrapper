@@ -15,6 +15,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.regex.Pattern;
 
@@ -62,41 +63,44 @@ public class EbayImageDownloader implements Runnable {
                 }
                 Document doc = Jsoup.connect("https://www.ebay.com/sch/i.html?_nkw="
                         + URLEncoder.encode(productToDump.name, "UTF-8")).get();
-                Elements metaDivs = doc.select("li.sresult div img");
+                List<Element> metaDivs = doc.select("li.sresult div img").subList(0, 6);
                 if (!"NULL".equals(productToDump.name) && !metaDivs.isEmpty()) {
-                    int imageSize = STARTING_IMAGE_SIZE;
-                    boolean downed= false;
-                    while (imageSize > MIN_IMAGE_SIZE && !downed) {
-                        for (Element metaDiv : metaDivs) {
-                            String imageSrc = metaDiv.attr("src");
-                            imageSrc = imageSrc.replace("s-l225", "s-l1600");
-                            URL url = new URL(imageSrc);
-                            URLConnection con = url.openConnection();
-                            con.setConnectTimeout(100000);
-                            con.setReadTimeout(100000);
-                            String imageExtension = imageSrc.substring(imageSrc.lastIndexOf(".") + 1);
-                            String sku = productToDump.sku;
-                            byte[] imageBytes = toByteArray(con.getInputStream());
-                            if (imageBytes.length <= imageSize) {
-                                continue;
-                            }
-                            result.append("\n" + sku + "," + sku + "." + imageExtension + ","
-                                    + sku + "." + imageExtension
-                                    + "," + sku + "." + imageExtension);
-                            i++;
-                            if (i == dumpEvery) {
-                                i = 0;
-                                csvWriterQueue.put(result);
-                                result = new StringBuilder("");
-                            }
-                            fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
-                                    imageBytes));
-                            downed = true;
-
-                            break;
+                    int maxImageSize = 0;
+                    int maxImageIndex = 0;
+                    for (int j = 0; j < metaDivs.size(); j++) {
+                        String imageSrc = metaDivs.get(j).attr("src");
+                        imageSrc = imageSrc.replace("s-l225", "s-l1600");
+                        URL url = new URL(imageSrc);
+                        URLConnection con = url.openConnection();
+                        con.setConnectTimeout(100000);
+                        con.setReadTimeout(100000);
+                        byte[] imageBytes = toByteArray(con.getInputStream());
+                        if (imageBytes.length > maxImageSize) {
+                            maxImageSize = imageBytes.length;
+                            maxImageIndex = j;
                         }
-                        imageSize -= IMAGE_SIZE_STEP;
                     }
+                    String imageSrc = metaDivs.get(maxImageIndex).attr("src");
+                    imageSrc = imageSrc.replace("s-l225", "s-l1600");
+                    URL url = new URL(imageSrc);
+                    URLConnection con = url.openConnection();
+                    con.setConnectTimeout(100000);
+                    con.setReadTimeout(100000);
+                    String imageExtension = imageSrc.substring(imageSrc.lastIndexOf(".") + 1);
+                    String sku = productToDump.sku;
+                    byte[] imageBytes = toByteArray(con.getInputStream());
+                    result.append("\n" + sku + "," + sku + "." + imageExtension + ","
+                            + sku + "." + imageExtension
+                            + "," + sku + "." + imageExtension);
+                    i++;
+                    if (i == dumpEvery) {
+                        i = 0;
+                        csvWriterQueue.put(result);
+                        result = new StringBuilder("");
+                    }
+                    fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
+                            imageBytes));
+
                 }
 
             } catch (InterruptedException e) {

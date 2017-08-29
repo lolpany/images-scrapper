@@ -221,3 +221,21 @@ down 30
         2 mins - started 1 firefox
         350mb and 220 mb, 50 %processor
     chrome headless
+
+
+
+
+
+--- last todo ----------
+
+ebay + google scrap
+    if no ebay then google
+
+univold
+    import image for 20k SW FOUND HYPERVISOR
+    rescrap for files with size 0
+
+megacomponent
+    if files with size 0 - rescrap
+    scrap rest
+    import image for 20k SW FOUND HYPERVISOR

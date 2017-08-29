@@ -32,7 +32,7 @@ public class CsvProductReader implements Runnable {
 
     public void run() {
         try {
-            Scanner scanner = new Scanner(new File("D:\\buffer\\scrapper\\univold-notdowned.csv"));
+            Scanner scanner = new Scanner(new File("D:\\buffer\\scrapper\\to-down\\univold.txt"));
             int i = 0;
             while (scanner.hasNext() && i < from) {
                 scanner.nextLine();

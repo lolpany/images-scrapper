@@ -113,8 +113,11 @@ public class Main {
         List<BlockingQueue<StringBuilder>> csvWriterQueues = new ArrayList<>();
         for (int i = 0; i < downloaders; i++) {
             BlockingQueue<StringBuilder> csvWriterQueue = new ArrayBlockingQueue<>(5);
-            executorService.execute(new GoogleImagesSelenideDownloader(null, queue,
-                    fileQueue, imagesRoot, magmiDir, i, dumpEvery, csvWriterQueue));
+            executorService.execute(
+//                    new GoogleImagesSelenideDownloader(null, queue, fileQueue, imagesRoot, magmiDir, i, dumpEvery,
+//                            csvWriterQueue));
+            new EbayImageDownloader(null, queue, fileQueue, imagesRoot, magmiDir, i, dumpEvery,
+                    csvWriterQueue));
             csvWriterQueues.add(csvWriterQueue);
         }
 

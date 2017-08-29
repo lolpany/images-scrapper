@@ -92,4 +92,47 @@ public class Utils {
             }
         });
     }
+
+    @Test
+    public void goRescrapZeroSize() throws IOException {
+        FileUtils.writeLines(new File("D:\\buffer\\scrapper\\univold-zerosize-todown.csv"),
+                rescrapZeroSize("D:\\buffer\\scrapper\\univold-zerosize.csv", "D:\\buffer\\scrapper\\out (1).csv"));
+    }
+
+    public Collection<String> rescrapZeroSize(String zeroSize, String all) throws FileNotFoundException {
+        Map<String, String> toDownloadMap = new HashMap<>();
+        Scanner toDownloadScanner = new Scanner(new File(all));
+        toDownloadScanner.nextLine();
+        while (toDownloadScanner.hasNext()) {
+            String line = toDownloadScanner.nextLine();
+            String[] lineParts = line.split("\t");
+            if (lineParts.length > 1) {
+                toDownloadMap.put(lineParts[1], line);
+            }
+        }
+
+        Set<String> downloadedSet = new HashSet<>();
+        Scanner downloadedScanner = new Scanner(new File(zeroSize));
+        downloadedScanner.nextLine();
+        downloadedScanner.nextLine();
+        while (downloadedScanner.hasNext()) {
+            String[] lineParts = downloadedScanner.nextLine().split("/");
+            if (lineParts.length > 1) {
+                String fileName= lineParts[lineParts.length-1];
+                downloadedSet.add(fileName.substring(0,fileName.lastIndexOf(".")).toUpperCase());
+            }
+        }
+
+        List<String> result =new ArrayList<>();
+        for (String sku: downloadedSet) {
+            String product = toDownloadMap.get(sku);
+            if (product == null) {
+                product = toDownloadMap.get(" " + sku);
+            }
+            if (product!=null) {
+                result.add(product);
+            }
+        }
+        return result;
+    }
 }
