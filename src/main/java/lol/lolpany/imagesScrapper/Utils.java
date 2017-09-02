@@ -52,11 +52,11 @@ public class Utils {
         while (downloadedScanner.hasNext()) {
             String[] lineParts = downloadedScanner.nextLine().split(",");
             if (lineParts.length > 1) {
-            downloadedSet.add(lineParts[0]);
+                downloadedSet.add(lineParts[0]);
             }
         }
 
-        for (String sku: downloadedSet) {
+        for (String sku : downloadedSet) {
             toDownloadMap.remove(sku);
         }
         return toDownloadMap.values();
@@ -68,21 +68,20 @@ public class Utils {
         Files.walkFileTree(Paths.get("D:\\buffer\\magmi2"), new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                    throws IOException
-            {
+                    throws IOException {
                 File current = file.toFile();
                 if (current.isFile()) {
                     String fileName = current.getName();
                     String[] fileNameParts = fileName.split("\\.");
                     current.renameTo(new File("D:\\buffer\\magmiend" + File.separator + fileNameParts[0]
-                    + fileNameParts[fileNameParts.length -1]));
+                            + fileNameParts[fileNameParts.length - 1]));
                 }
                 return FileVisitResult.CONTINUE;
             }
+
             @Override
             public FileVisitResult postVisitDirectory(Path dir, IOException e)
-                    throws IOException
-            {
+                    throws IOException {
                 if (e == null) {
                     return FileVisitResult.CONTINUE;
                 } else {
@@ -118,19 +117,42 @@ public class Utils {
         while (downloadedScanner.hasNext()) {
             String[] lineParts = downloadedScanner.nextLine().split("/");
             if (lineParts.length > 1) {
-                String fileName= lineParts[lineParts.length-1];
-                downloadedSet.add(fileName.substring(0,fileName.lastIndexOf(".")).toUpperCase());
+                String fileName = lineParts[lineParts.length - 1];
+                downloadedSet.add(fileName.substring(0, fileName.lastIndexOf(".")).toUpperCase());
             }
         }
 
-        List<String> result =new ArrayList<>();
-        for (String sku: downloadedSet) {
+        List<String> result = new ArrayList<>();
+        for (String sku : downloadedSet) {
             String product = toDownloadMap.get(sku);
             if (product == null) {
                 product = toDownloadMap.get(" " + sku);
             }
-            if (product!=null) {
+            if (product != null) {
                 result.add(product);
+            }
+        }
+        return result;
+    }
+
+    @Test
+    public void goImage() throws IOException {
+        FileUtils.writeLines(new File("D:\\buffer\\scrapper\\univold-one-image.csv"),
+                oneImageForAll("D:\\buffer\\scrapper\\out.csv", "asdf.png", "SW FOUND"));
+    }
+
+    public Collection<String> oneImageForAll(String toImportFiles, String imageName, String productName) throws FileNotFoundException {
+        List<String> result = new ArrayList<>();
+        result.add("sku,image,small_image,thumbnail");
+        Scanner toDownloadScanner = new Scanner(new File(toImportFiles));
+        toDownloadScanner.nextLine();
+        while (toDownloadScanner.hasNext()) {
+            String line = toDownloadScanner.nextLine();
+            if (line.contains(productName)) {
+                String[] lineParts = line.split("\t");
+                if (lineParts.length > 1) {
+                    result.add(lineParts[1] + "," + imageName + "," + imageName + "," + imageName);
+                }
             }
         }
         return result;

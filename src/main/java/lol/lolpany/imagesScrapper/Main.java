@@ -6,13 +6,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.phantomjs.PhantomJSDriver;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -93,18 +86,19 @@ public class Main {
                        String username, String password, int downloaders, int writers,
                        int dumpEvery) throws SQLException {
 
-        BlockingQueue<Product2> queue = new ArrayBlockingQueue<>(downloaders *2);
+        BlockingQueue<Product2> queue = new ArrayBlockingQueue<>(downloaders * 2);
+        BlockingQueue<Product2> outputQueue = new ArrayBlockingQueue<>(downloaders * 2);
         // ~40kb * 20 = 40mb of memory
-        BlockingQueue<Pair<String, byte[]>> fileQueue = new ArrayBlockingQueue<>(downloaders *2);
+        BlockingQueue<Pair<String, byte[]>> fileQueue = new ArrayBlockingQueue<>(downloaders * 2);
 
-        int numberOfRunners = 1 + downloaders + writers + 3;
+        int numberOfRunners = 1 + downloaders + writers * 2 + 3;
 
         ExecutorService executorService = new ThreadPoolExecutor(numberOfRunners,
                 numberOfRunners, 10, TimeUnit.MINUTES,
                 new ArrayBlockingQueue<>(numberOfRunners));
 
-        executorService.execute(new CsvProductReader(null,from, n, queue,
-                url, username, password, downloaders));
+        executorService.execute(new CsvProductReader(null, from, n, queue,
+                url, username, password, downloaders, "D:\\buffer\\scrapper\\univold-zerosize-todown.csv"));
 
 //        System.setProperty("webdriver.gecko.driver", "D:\\buffer\\geckodriver-v0.17.0-win64\\geckodriver.exe");
         System.setProperty("webdriver.chrome.driver", "D:\\buffer\\chromedriver\\chromedriver.exe");
@@ -114,23 +108,29 @@ public class Main {
         for (int i = 0; i < downloaders; i++) {
             BlockingQueue<StringBuilder> csvWriterQueue = new ArrayBlockingQueue<>(5);
             executorService.execute(
-//                    new GoogleImagesSelenideDownloader(null, queue, fileQueue, imagesRoot, magmiDir, i, dumpEvery,
-//                            csvWriterQueue));
-            new EbayImageDownloader(null, queue, fileQueue, imagesRoot, magmiDir, i, dumpEvery,
-                    csvWriterQueue));
+                    new EbayImageDownloader(null, queue, outputQueue, fileQueue, imagesRoot, magmiDir, i, dumpEvery,
+                            csvWriterQueue));
             csvWriterQueues.add(csvWriterQueue);
         }
 
-        executorService.execute(new CsvWriter(csvWriterQueues, csvWriterQueues.size()));
+        for (int i = 0; i < downloaders; i++) {
+            BlockingQueue<StringBuilder> csvWriterQueue = new ArrayBlockingQueue<>(5);
+            executorService.execute(
+                    new GoogleImagesSelenideDownloader(null, outputQueue, fileQueue, imagesRoot, magmiDir, i, dumpEvery,
+                            csvWriterQueue));
+            csvWriterQueues.add(csvWriterQueue);
+        }
+
+        executorService.execute(new CsvWriter(csvWriterQueues));
 
         for (int i = 0; i < writers; i++) {
-            int endFiles ;
+            int endFiles;
             if (i < writers) {
-                endFiles = downloaders/writers;
+                endFiles = downloaders / writers;
             } else {
-                endFiles = downloaders/writers + downloaders % writers;
+                endFiles = downloaders / writers + downloaders % writers;
             }
-            executorService.execute(new ImageWriter(fileQueue, imageLocation, endFiles ));
+            executorService.execute(new ImageWriter(fileQueue, imageLocation, endFiles));
         }
     }
 

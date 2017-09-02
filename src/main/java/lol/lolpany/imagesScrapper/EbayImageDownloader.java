@@ -1,26 +1,21 @@
 package lol.lolpany.imagesScrapper;
 
 import com.google.code.magja.service.product.ProductRemoteService;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static lol.lolpany.imagesScrapper.ImageWriter.END_FILE;
-import static lol.lolpany.imagesScrapper.Main.*;
 import static lol.lolpany.imagesScrapper.Product2.END_QUEUE;
 import static org.apache.commons.io.IOUtils.toByteArray;
 
@@ -30,6 +25,7 @@ public class EbayImageDownloader implements Runnable {
 
     final ProductRemoteService productService;
     final BlockingQueue<Product2> inputQueue;
+    final BlockingQueue<Product2> outputQueue;
     final BlockingQueue<Pair<String, byte[]>> fileQueue;
     final String imagesRoot;
     final String magmiDir;
@@ -39,10 +35,11 @@ public class EbayImageDownloader implements Runnable {
 
 
     EbayImageDownloader(ProductRemoteService productService, BlockingQueue<Product2> inputQueue,
-                        BlockingQueue<Pair<String, byte[]>> fileQueue, String imagesRoot,
+                        BlockingQueue<Product2> outputQueue, BlockingQueue<Pair<String, byte[]>> fileQueue, String imagesRoot,
                         String magmiDir, int downloaderIndex, int dumpEvery, BlockingQueue<StringBuilder> csvWriterQueue) {
         this.productService = productService;
         this.inputQueue = inputQueue;
+        this.outputQueue = outputQueue;
         this.fileQueue = fileQueue;
         this.imagesRoot = imagesRoot;
         this.magmiDir = magmiDir;
@@ -56,14 +53,15 @@ public class EbayImageDownloader implements Runnable {
         int i = 0;
         while (true) {
             try {
-                Product2 productToDump = inputQueue.take();
+                Product2 productToDump = inputQueue.poll(5, TimeUnit.MINUTES);
 
-                if (productToDump.equals(END_QUEUE)) {
+                if (productToDump == null) {
                     break;
                 }
                 Document doc = Jsoup.connect("https://www.ebay.com/sch/i.html?_nkw="
                         + URLEncoder.encode(productToDump.name, "UTF-8")).get();
-                List<Element> metaDivs = doc.select("li.sresult div img").subList(0, 6);
+                List<Element> metaDivs = doc.select("li.sresult div img");
+                metaDivs = metaDivs.subList(0, Math.min(metaDivs.size(), 6));
                 if (!"NULL".equals(productToDump.name) && !metaDivs.isEmpty()) {
                     int maxImageSize = 0;
                     int maxImageIndex = 0;
@@ -101,6 +99,8 @@ public class EbayImageDownloader implements Runnable {
                     fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
                             imageBytes));
 
+                } else if (metaDivs.isEmpty()) {
+                    outputQueue.put(productToDump);
                 }
 
             } catch (InterruptedException e) {

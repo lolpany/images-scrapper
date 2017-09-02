@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static com.codeborne.selenide.Selenide.switchTo;
@@ -94,13 +95,13 @@ public class GoogleImagesSelenideDownloader implements Runnable {
 
         Configuration.baseUrl = "https://www.google.com/";
 
-        StringBuilder result = new StringBuilder("sku,image,small_image,thumbnail");
+        StringBuilder result = new StringBuilder("");
         int i = 0;
         while (true) {
             try {
-                Product2 productToDump = inputQueue.take();
+                Product2 productToDump = inputQueue.poll(5, TimeUnit.MINUTES);
 
-                if (productToDump.equals(END_QUEUE)) {
+                if (productToDump == null) {
                     break;
                 }
                 if (productToDump.name.contains("SW FOUND")) {
@@ -169,6 +170,12 @@ public class GoogleImagesSelenideDownloader implements Runnable {
 
         {
             e1.printStackTrace();
+        }
+        try {
+            csvWriterQueue.put(result);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         try {
 

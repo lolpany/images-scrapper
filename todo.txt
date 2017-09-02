@@ -239,3 +239,31 @@ megacomponent
     if files with size 0 - rescrap
     scrap rest
     import image for 20k SW FOUND HYPERVISOR
+
+error - downloaders hang when nothing to take
+
+
+null image request
+    select product.entity_id as id,product.sku as sku , image.value as image_path, upc.value as upc_value, name.value as name_value
+         from (select entity_id, sku from catalog_product_entity where entity_type_id = 4 order by entity_id limit 1,100) product
+       right join (select * from catalog_product_entity_varchar where value is null  and attribute_id = 85) image on (image.entity_id = product.entity_id  and image.attribute_id = 85 )
+       left join catalog_product_entity_varchar upc  on (product.entity_id = upc.entity_id and upc.attribute_id = 132)
+                 left join catalog_product_entity_varchar name  on (product.entity_id = name.entity_id and name.attribute_id = 71)
+
+
+     mysql megacomp_electric -u megacomp_scrap --password=As1234567 < /home/megacomponent/noimage.sql > /home/megacomponent/noimage.csv
+
+
+reimport univold3 (3).csv and see if mpommom34m-ax sku has image
+    if yes then must remove all zero size images and then import them
+
+
+
+    megacomponent no image
+        sku is null
+        no image on disk, but image in db
+
+
+
+
+       mysql megacomp_electric -u megacomp_scrap --password=As1234567 < /home/univold/getallprods.sql > /home/univold/getallprods.csv

@@ -1,7 +1,6 @@
 package lol.lolpany.imagesScrapper;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.sql.*;
 import java.util.Scanner;
 import java.util.concurrent.BlockingQueue;
@@ -18,13 +17,15 @@ public class CsvProductReader implements Runnable {
     final String username;
     final String password;
     final int downloaders;
+    final String inputFile;
 
-    public CsvProductReader(Connection connection, long from, long n, BlockingQueue<Product2> productQueue, String url, String username, String password, int downloaders) {
+    public CsvProductReader(Connection connection, long from, long n, BlockingQueue<Product2> productQueue, String url, String username, String password, int downloaders, String inputFile) {
         this.connection = connection;
         this.from = from;
         this.url = url;
         this.username = username;
         this.password = password;
+        this.inputFile = inputFile;
         this.to = from + n;
         this.productQueue = productQueue;
         this.downloaders= downloaders;
@@ -32,7 +33,7 @@ public class CsvProductReader implements Runnable {
 
     public void run() {
         try {
-            Scanner scanner = new Scanner(new File("D:\\buffer\\scrapper\\to-down\\univold.txt"));
+            Scanner scanner = new Scanner(new File(inputFile));
             int i = 0;
             while (scanner.hasNext() && i < from) {
                 scanner.nextLine();

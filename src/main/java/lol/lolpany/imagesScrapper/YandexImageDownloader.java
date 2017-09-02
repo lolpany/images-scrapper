@@ -16,6 +16,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,9 +58,9 @@ public class YandexImageDownloader implements Runnable {
         int batchNumber = 0;
         while (true) {
             try {
-                Product2 productToDump = inputQueue.take();
+                Product2 productToDump = inputQueue.poll(5, TimeUnit.MINUTES);
 
-                if (productToDump. equals( END_QUEUE)) {
+                if (productToDump == null) {
                     break;
                 }
                 Document doc = Jsoup.connect("https://yandex.ru/images/search?text="

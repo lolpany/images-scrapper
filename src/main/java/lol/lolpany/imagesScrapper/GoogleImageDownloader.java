@@ -20,6 +20,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,13 +60,13 @@ public class GoogleImageDownloader implements Runnable {
     }
 
     public void run() {
-        StringBuilder result = new StringBuilder("sku,image,small_image,thumbnail");
+        StringBuilder result = new StringBuilder("");
         int i = 0;
         while (true) {
             try {
-                Product2 productToDump = inputQueue.take();
+                Product2 productToDump = inputQueue.poll(5, TimeUnit.MINUTES);
 
-                if (productToDump.equals(END_QUEUE)) {
+                if (productToDump == null) {
                     break;
                 }
                 if (productToDump.name.contains("SW FOUND")) {
@@ -128,6 +129,12 @@ public class GoogleImageDownloader implements Runnable {
 
         {
             e1.printStackTrace();
+        }
+        try {
+            csvWriterQueue.put(result);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         try {
 
