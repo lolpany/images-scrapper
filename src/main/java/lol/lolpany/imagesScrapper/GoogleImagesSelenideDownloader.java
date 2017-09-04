@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 import static com.codeborne.selenide.Selenide.switchTo;
 import static java.lang.Thread.sleep;
 import static lol.lolpany.imagesScrapper.ImageWriter.END_FILE;
+import static lol.lolpany.imagesScrapper.Main.skuToFileName;
 import static lol.lolpany.imagesScrapper.Product2.END_QUEUE;
 import static lol.lolpany.imagesScrapper.Utils.identifyImageExtension;
 import static org.apache.commons.io.IOUtils.toByteArray;
@@ -99,9 +100,9 @@ public class GoogleImagesSelenideDownloader implements Runnable {
         int i = 0;
         while (true) {
             try {
-                Product2 productToDump = inputQueue.poll(5, TimeUnit.MINUTES);
+                Product2 productToDump = inputQueue.take();
 
-                if (productToDump == null) {
+                if (productToDump == END_QUEUE) {
                     break;
                 }
                 if (productToDump.name.contains("SW FOUND")) {
@@ -138,16 +139,18 @@ public class GoogleImagesSelenideDownloader implements Runnable {
                     if (imageExtension != null) {
                         String sku = productToDump.sku;
 
-                        result.append("\n" + sku + "," + sku + "." + imageExtension + ","
-                                + sku + "." + imageExtension
-                                + "," + sku + "." + imageExtension);
+                        String fileName = skuToFileName(sku) + "." + imageExtension;
+
+                        result.append("\n" + sku + "," + fileName + ","
+                                + fileName
+                                + "," + fileName);
                         i++;
                         if (i == dumpEvery) {
                             i = 0;
                             csvWriterQueue.put(result);
                             result = new StringBuilder("");
                         }
-                        fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
+                        fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + fileName,
                                 imageBytes));
                         sleep(2000 + Math.round( Math.random()) * 10000);
                     }
@@ -159,21 +162,13 @@ public class GoogleImagesSelenideDownloader implements Runnable {
                 e.printStackTrace();
             }
         }
-
         try
 
         {
-            FileUtils.writeStringToFile(new File(magmiDir + File.separator +
-                    "google" + downloaderIndex + ".csv"), result.toString(), StandardCharsets.UTF_8);
-        } catch (
-                IOException e1)
+//            FileUtils.writeStringToFile(new File(magmiDir + File.separator +
+//                    "google" + downloaderIndex + ".csv"), result.toString(), StandardCharsets.UTF_8);
 
-        {
-            e1.printStackTrace();
-        }
-        try {
             csvWriterQueue.put(result);
-
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

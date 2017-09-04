@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static lol.lolpany.imagesScrapper.ImageWriter.END_FILE;
+import static lol.lolpany.imagesScrapper.Main.skuToFileName;
 import static lol.lolpany.imagesScrapper.Product2.END_QUEUE;
 import static org.apache.commons.io.IOUtils.toByteArray;
 
@@ -53,9 +54,9 @@ public class EbayImageDownloader implements Runnable {
         int i = 0;
         while (true) {
             try {
-                Product2 productToDump = inputQueue.poll(5, TimeUnit.MINUTES);
+                Product2 productToDump = inputQueue.take();
 
-                if (productToDump == null) {
+                if (productToDump == END_QUEUE) {
                     break;
                 }
                 Document doc = Jsoup.connect("https://www.ebay.com/sch/i.html?_nkw="
@@ -87,16 +88,18 @@ public class EbayImageDownloader implements Runnable {
                     String imageExtension = imageSrc.substring(imageSrc.lastIndexOf(".") + 1);
                     String sku = productToDump.sku;
                     byte[] imageBytes = toByteArray(con.getInputStream());
-                    result.append("\n" + sku + "," + sku + "." + imageExtension + ","
-                            + sku + "." + imageExtension
-                            + "," + sku + "." + imageExtension);
+
+                    String fileName = skuToFileName(sku) + "." + imageExtension;
+                    result.append("\n" + sku + "," + fileName + ","
+                            + fileName
+                            + "," + fileName);
                     i++;
                     if (i == dumpEvery) {
                         i = 0;
                         csvWriterQueue.put(result);
                         result = new StringBuilder("");
                     }
-                    fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + sku + "." + imageExtension,
+                    fileQueue.put(new ImmutablePair<>(imagesRoot + "\\" + fileName,
                             imageBytes));
 
                 } else if (metaDivs.isEmpty()) {

@@ -58,9 +58,9 @@ public class YandexImageDownloader implements Runnable {
         int batchNumber = 0;
         while (true) {
             try {
-                Product2 productToDump = inputQueue.poll(5, TimeUnit.MINUTES);
+                Product2 productToDump = inputQueue.take();
 
-                if (productToDump == null) {
+                if (productToDump == END_QUEUE) {
                     break;
                 }
                 Document doc = Jsoup.connect("https://yandex.ru/images/search?text="

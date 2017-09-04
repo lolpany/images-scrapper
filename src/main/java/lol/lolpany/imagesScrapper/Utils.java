@@ -157,4 +157,37 @@ public class Utils {
         }
         return result;
     }
+
+    @Test
+    public void imagesNotPresent() throws IOException {
+        FileUtils.writeLines(new File("D:\\buffer\\scrapper\\mega-small.csv"),
+                imagesNotPresent("D:\\buffer\\scrapper\\getallprods-mega.csv", "D:\\buffer\\scrapper\\mega-small-images.csv"));
+    }
+
+    public Collection<String> imagesNotPresent(String fromDb, String fromFs) throws FileNotFoundException {
+        Set<String> onFs = new HashSet<>();
+        Scanner toDownloadScanner = new Scanner(new File(fromFs));
+        while (toDownloadScanner.hasNext()) {
+            String line = toDownloadScanner.nextLine();
+            String[] lineParts = line.split("/", 2);
+            if (lineParts.length == 2) {
+                onFs.add("/" + lineParts[1]);
+            }
+        }
+
+        List<String> result = new ArrayList<>();
+        result.add("id,sku,name,image");
+        Scanner fromDbScann = new Scanner(new File(fromDb));
+        fromDbScann.nextLine();
+        while (fromDbScann.hasNext()) {
+            String line = fromDbScann.nextLine();
+            String[] lineParts = line.split("\t");
+            if (lineParts.length == 4) {
+                if (onFs.contains(lineParts[3])) {
+                    result.add(line);
+                }
+            }
+        }
+        return result;
+    }
 }

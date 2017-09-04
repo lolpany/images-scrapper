@@ -64,9 +64,9 @@ public class GoogleImageDownloader implements Runnable {
         int i = 0;
         while (true) {
             try {
-                Product2 productToDump = inputQueue.poll(5, TimeUnit.MINUTES);
+                Product2 productToDump = inputQueue.take();
 
-                if (productToDump == null) {
+                if (productToDump == END_QUEUE) {
                     break;
                 }
                 if (productToDump.name.contains("SW FOUND")) {
@@ -119,20 +119,10 @@ public class GoogleImageDownloader implements Runnable {
             }
         }
 
-        try
-
-        {
-            FileUtils.writeStringToFile(new File(magmiDir + File.separator +
-                    "google" + downloaderIndex + ".csv"), result.toString(), StandardCharsets.UTF_8);
-        } catch (
-                IOException e1)
-
-        {
-            e1.printStackTrace();
-        }
         try {
             csvWriterQueue.put(result);
-
+//            FileUtils.writeStringToFile(new File(magmiDir + File.separator +
+//                    "google" + downloaderIndex + ".csv"), result.toString(), StandardCharsets.UTF_8);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

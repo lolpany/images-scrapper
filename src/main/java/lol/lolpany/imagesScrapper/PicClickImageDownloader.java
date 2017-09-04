@@ -59,8 +59,8 @@ public class PicClickImageDownloader implements Runnable {
         int batchNumber = 0;
         while (true) {
             try {
-                Product2 productToDump = inputQueue.poll(5,TimeUnit.MINUTES);
-                if (productToDump == null) {
+                Product2 productToDump = inputQueue.take();
+                if (productToDump == END_QUEUE) {
                     break;
                 }
                 System.out.println(productToDump.upc);

@@ -48,9 +48,9 @@ public class CsvProductReader implements Runnable {
                 if (i > to) {
                     break;
                 }
-                productQueue.put(new Product2(productId, productAttributes[1], productAttributes[3],
-                        productAttributes[4]));
-                } catch (NumberFormatException e) {
+                productQueue.put(new Product2(productId, productAttributes[1], productAttributes[2],
+                        productAttributes[2]));
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }

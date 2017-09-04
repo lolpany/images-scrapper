@@ -86,37 +86,46 @@ public class Main {
                        String username, String password, int downloaders, int writers,
                        int dumpEvery) throws SQLException {
 
-        BlockingQueue<Product2> queue = new ArrayBlockingQueue<>(downloaders * 2);
-        BlockingQueue<Product2> outputQueue = new ArrayBlockingQueue<>(downloaders * 2);
+        BlockingQueue<Product2> csvReaderOutputQueue = new ArrayBlockingQueue<>(downloaders * 2);
+        BlockingQueue<Product2> downloaderInputQueue = new ArrayBlockingQueue<>(downloaders * 2);
+        BlockingQueue<Product2> ebayDownloadersOutputQueue = new ArrayBlockingQueue<>(downloaders * 2);
+        BlockingQueue<Product2> googleSelenideDownloadersInputQueue = new ArrayBlockingQueue<>(downloaders * 2);
         // ~40kb * 20 = 40mb of memory
         BlockingQueue<Pair<String, byte[]>> fileQueue = new ArrayBlockingQueue<>(downloaders * 2);
 
-        int numberOfRunners = 1 + downloaders + writers * 2 + 3;
+        int googleSelenideDownloaders = 1;
+
+        int numberOfRunners = 1 + googleSelenideDownloaders + downloaders + writers  + 1+ 3;
 
         ExecutorService executorService = new ThreadPoolExecutor(numberOfRunners,
                 numberOfRunners, 10, TimeUnit.MINUTES,
                 new ArrayBlockingQueue<>(numberOfRunners));
 
-        executorService.execute(new CsvProductReader(null, from, n, queue,
-                url, username, password, downloaders, "D:\\buffer\\scrapper\\univold-zerosize-todown.csv"));
+        executorService.execute(new CsvProductReader(null, from, n, csvReaderOutputQueue,
+                url, username, password, downloaders, "D:\\buffer\\scrapper\\mega-small.csv"));
 
 //        System.setProperty("webdriver.gecko.driver", "D:\\buffer\\geckodriver-v0.17.0-win64\\geckodriver.exe");
         System.setProperty("webdriver.chrome.driver", "D:\\buffer\\chromedriver\\chromedriver.exe");
+
+        executorService.execute(new EndSignalMultiplier(csvReaderOutputQueue, downloaderInputQueue, downloaders));
 
 
         List<BlockingQueue<StringBuilder>> csvWriterQueues = new ArrayList<>();
         for (int i = 0; i < downloaders; i++) {
             BlockingQueue<StringBuilder> csvWriterQueue = new ArrayBlockingQueue<>(5);
             executorService.execute(
-                    new EbayImageDownloader(null, queue, outputQueue, fileQueue, imagesRoot, magmiDir, i, dumpEvery,
+                    new EbayImageDownloader(null, downloaderInputQueue, ebayDownloadersOutputQueue, fileQueue, imagesRoot, magmiDir, i, dumpEvery,
                             csvWriterQueue));
             csvWriterQueues.add(csvWriterQueue);
         }
 
-        for (int i = 0; i < downloaders; i++) {
+
+        executorService.execute(new EndSignalMultiplier(ebayDownloadersOutputQueue, googleSelenideDownloadersInputQueue, googleSelenideDownloaders));
+
+        for (int i = 0; i < googleSelenideDownloaders; i++) {
             BlockingQueue<StringBuilder> csvWriterQueue = new ArrayBlockingQueue<>(5);
             executorService.execute(
-                    new GoogleImagesSelenideDownloader(null, outputQueue, fileQueue, imagesRoot, magmiDir, i, dumpEvery,
+                    new GoogleImagesSelenideDownloader(null, googleSelenideDownloadersInputQueue, fileQueue, imagesRoot, magmiDir, i, dumpEvery,
                             csvWriterQueue));
             csvWriterQueues.add(csvWriterQueue);
         }
@@ -158,6 +167,10 @@ public class Main {
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
         } catch (Exception e) {
         }
+    }
+
+    static String skuToFileName(String sku) {
+        return sku.replaceAll("/", "-");
     }
 
 }
