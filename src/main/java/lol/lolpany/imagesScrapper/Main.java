@@ -102,7 +102,7 @@ public class Main {
                 new ArrayBlockingQueue<>(numberOfRunners));
 
         executorService.execute(new CsvProductReader(null, from, n, csvReaderOutputQueue,
-                url, username, password, downloaders, "D:\\buffer\\scrapper\\mega-small.csv"));
+                url, username, password, downloaders, "D:\\buffer\\scrapper\\mega-all-products.csv"));
 
 //        System.setProperty("webdriver.gecko.driver", "D:\\buffer\\geckodriver-v0.17.0-win64\\geckodriver.exe");
         System.setProperty("webdriver.chrome.driver", "D:\\buffer\\chromedriver\\chromedriver.exe");

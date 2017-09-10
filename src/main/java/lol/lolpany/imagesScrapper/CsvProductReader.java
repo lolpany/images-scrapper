@@ -49,7 +49,7 @@ public class CsvProductReader implements Runnable {
                     break;
                 }
                 productQueue.put(new Product2(productId, productAttributes[1], productAttributes[2],
-                        productAttributes[2]));
+                        productAttributes[4]));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

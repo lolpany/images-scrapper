@@ -61,7 +61,7 @@ public class EbayImageDownloader implements Runnable {
                 }
                 Document doc = Jsoup.connect("https://www.ebay.com/sch/i.html?_nkw="
                         + URLEncoder.encode(productToDump.name, "UTF-8")).get();
-                List<Element> metaDivs = doc.select("li.sresult div img");
+                List<Element> metaDivs = doc.select("div.sresult div img");
                 metaDivs = metaDivs.subList(0, Math.min(metaDivs.size(), 6));
                 if (!"NULL".equals(productToDump.name) && !metaDivs.isEmpty()) {
                     int maxImageSize = 0;
