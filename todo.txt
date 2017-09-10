@@ -108,7 +108,7 @@ gbesergey@gmail.com sadf3f23F#@
     1.2 m products = 38g = ? of upload time
 
 
-  cpanel  megacomponent z7NR:f3]*kVFw"dA
+  cpanel  megacomponent $V|1{\7883v"k/h
 
 mega    5*R[B5j-q6\2l)l
 
@@ -269,9 +269,27 @@ select product.entity_id as id, product.sku, name.value, image.value as image_pa
        right join (select * from catalog_product_entity_varchar where value is not null and attribute_id = 85) image on (image.entity_id = product.entity_id  and image.attribute_id = 85 )
        left join catalog_product_entity_varchar name  on (product.entity_id = name.entity_id and name.attribute_id = 71);
 
+
+select product.entity_id as id,product.sku as sku , image.value as image_path, upc.value as upc_value, name.value as name_value
+         from (select entity_id, sku from catalog_product_entity where entity_type_id = 4 order by entity_id limit 1,100) product
+       right join (select * from catalog_product_entity_varchar where  attribute_id = 85) image on (image.entity_id = product.entity_id  and image.attribute_id = 85 )
+       left join catalog_product_entity_varchar upc  on (product.entity_id = upc.entity_id and upc.attribute_id = 132)
+                 left join catalog_product_entity_varchar name  on (product.entity_id = name.entity_id and name.attribute_id = 71)
+
+
+
+
        mysql univold_univoldsdb -u univold_scrap --password=sadf23fABw23g23af33 < /home/univold/getallprods.sql > /home/univold/getallprods.csv
 
 
        mega small
          find product -size -12000c > ~/mega-small-images.csv
          30 percent of all
+
+
+
+
+
+
+
+         mysql megacomp_electric -u megacomp_scrap --password=As1234567 < /home/megacomponent/all-products.sql > /home/megacomponent/all-products.csv
